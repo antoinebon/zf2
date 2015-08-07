@@ -1,0 +1,160 @@
+<?
+$orders = array('log' => 'Log time', 'db' => 'Database total request time', 'time' => 'Request execution time', 'memory' => 'Request memory consumption');
+$logPerPageOptions = array(40, 70, 100, 200, 300, 400);
+?>
+<style>
+.run {
+    cursor: pointer;
+}
+.run rect:hover {
+    fill: #AAA !important;
+}
+.axis {
+    font: 10px sans-serif;
+}
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+.x.axis .tick {
+    _display: none;
+}
+</style>
+<div class="row">
+    <div class="col-sm-6">
+        <div class="btn-group">
+            <div class="btn-group">
+                <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
+                    Sort By
+                    <span class="caret"></span>
+                </button>
+                <ul id="orderby-dropdown" class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
+                    <? foreach ($orders as $order => $title) { ?>
+                    <li <?=(!empty($urlOptions['query']['order']) && $urlOptions['query']['order'] === $order) ? "class='active'" : ""?> role="presentation"><a role="menuitem" tabindex="-1" data-order=<?=$order?>><?=$title?></a></li>
+                    <? } ?>
+                </ul>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-expanded="true">
+                    Logs Per Page
+                    <span class="caret"></span>
+                </button>
+                <ul id="pagecount-dropdown" class="dropdown-menu" role="menu">
+                    <? foreach ($logPerPageOptions as $logPerPageOption) { ?>
+                    <li <?=(!empty($urlOptions['query']['count']) && $urlOptions['query']['count'] == $logPerPageOption) ? "class='active'" : ""?> role="presentation"><a role="menuitem" tabindex="-1" data-count=<?=$logPerPageOption?>><?=$logPerPageOption?></a></li>
+                    <? } ?>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6">
+		<form class="form-inline" id="text-filter-form">
+			<div class="form-group">
+				<input type="text" class="form-control" placeholder="Filter in logs" value="<?=isset($urlOptions['query']['filter']) ? $urlOptions['query']['filter'] : ''?>"></input>
+			</div>
+			<button type="submit" class="btn btn-primary">Filter</button>
+		</form>
+    </div>
+	<br/>
+    <div class="col-md-12" style="margin-top:15px">
+		<h4>Number of logs found: <b id="result-count"></b></h4>
+	</div>
+    <div class="col-md-6">
+        <h2>Request</h2>
+        <table id="legend-request" class="table table-striped">
+           <tr><td>Ip</td><td id="ip"></td></tr>
+           <tr><td>Method</td><td id="method"></td></tr>
+           <tr><td>Time</td><td id="time"></td></tr>
+           <tr><td>Uri</td><td id="uri"></td></tr>
+           <tr><td>Log stamp</td><td id="run"></td></tr>
+        </table>
+    </div>
+    <div class="col-md-6">
+        <h2>Controller</h2>
+        <table id="legend-controller" class="table table-striped">
+           <tr><td>Controller</td><td id="controller"></td></tr>
+           <tr><td>Route</td><td id="route"></td></tr>
+           <tr><td>Templates</td><td id="templates"></td></tr>
+        </table>
+    </div>
+<? foreach ($graphs as $name => $title) { ?>
+    <div class="col-md-12">
+    <?=$this->paginationControl(
+            // the paginator object
+            $this->paginator,
+            'sliding',
+            array('profiler/partial/paginator.phtml', 'profiler'),
+            array(
+                'route' => 'profiler',
+                'action' => 'index',
+                'urlOptions' => $urlOptions
+            )
+        );
+    ?>
+    </div>
+    <div class="col-md-9 chart-container">
+        <h2><?=$title?></h2>
+        <svg id="chart-<?=$name?>" class="chart"></svg>
+    </div>
+    <? if ($name === 'db') { ?>
+        <div id='legend-db' class="col-md-3">
+            <h2>DB request info</h2>
+            <table class="table table-striped">
+                <tr><td>Type</td><td id="type"></td></tr>
+                <tr><td>Parameters</td><td id="parameters"></td></tr>
+                <tr><td>SQL</td><td id="sql"></td></tr>
+                <tr><td>Duration</td><td id="duration"></td></tr>
+            </table>
+        </div>
+    <? } else if ($name === 'time') { ?>
+        <div id='legend-time' class="col-md-3">
+            <h2>Event processing time</h2>
+            <table class="table table-striped">
+                <tr><td>Name</td><td id="name"></td></tr>
+                <tr><td>Target</td><td id="target"></td></tr>
+                <tr><td>File</td><td id="file"></td></tr>
+                <tr><td>Processing time</td><td id="elapsed"></td></tr>
+            </table>
+        </div>
+    <? } else if ($name === 'memory') { ?>
+        <div id='legend-memory' class="col-md-3">
+            <h2>Event memory usage</h2>
+            <table class="table table-striped">
+                <tr><td>Name</td><td id="name"></td></tr>
+                <tr><td>Target</td><td id="target"></td></tr>
+                <tr><td>File</td><td id="file"></td></tr>
+                <tr><td>Memory usage</td><td id="difference"></td></tr>
+            </table>
+        </div>
+    <? } ?>
+<? } ?>
+</div>
+
+<script src="<?=$this->url('profiler-static', array('resource' => 'js'));?>/profilerBarCharts.js"></script>
+
+<script type="text/javascript" charset="utf-8">
+$(document).ready(function() {
+    profilerCharts = new profilerBarCharts("<?=$this->url('profiler', array('action' => 'graphdata', 'page' => $page), $urlOptions);?>");
+
+    $('#orderby-dropdown a').click(function () {
+        window.location.search=replaceQueryParam('order', $(this).data('order'), window.location.search);
+    });
+
+    $('#pagecount-dropdown a').click(function () {
+        window.location.search=replaceQueryParam('count', $(this).data('count'), window.location.search);
+    });
+
+    $('#text-filter-form').on('submit', function (e) {
+		e.preventDefault();
+        window.location.search=replaceQueryParam('filter', $('input', this).val(), window.location.search);
+    });
+
+    function replaceQueryParam(param, newval, search) {
+        var regex = new RegExp("([?;&])" + param + "[^&;]*[;&]?");
+        var query = search.replace(regex, "$1").replace(/&$/, '');
+        return (query.length > 2 ? query + "&" : "?") + (newval ? param + "=" + encodeURIComponent(newval) : '');
+    }
+});
+</script>

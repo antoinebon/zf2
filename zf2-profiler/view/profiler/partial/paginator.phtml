@@ -1,0 +1,34 @@
+<?php
+$aUrlParams = array(
+    'controller' => $this->controller,
+    'action'     => $this->action,
+);
+$aUrlOptions = isset($this->urlOptions) ? $this->urlOptions : array();
+?>
+<?php if ($this->pageCount): ?>
+<ul class="pagination">
+
+<!-- Previous page link -->
+<?php if (isset($this->previous)): ?>
+  <li data-page="<?=$this->previous?>" class="arrow"><a href="<?php echo $this->url($this->route, $aUrlParams + array('page' => $this->previous), $aUrlOptions); ?>">&laquo;</a></li>
+<?php else: ?>
+    <li class="disabled"><a>&laquo;</a></li>
+<?php endif; ?>
+
+<?php foreach ($this->pagesInRange as $page): ?>
+  <?php if ($page != $this->current): ?>
+    <li data-page=<?=$page?>><a href="<?php echo $this->url($this->route, $aUrlParams + array('action' => 'index', 'page' => $page), $aUrlOptions); ?>"><?php echo $page ?></a></li>
+  <?php else: ?>
+    <li class="active" data-page=<?=$page?>><a href="<?php echo $this->url($this->route, $aUrlParams  + array('page' => $page), $aUrlOptions); ?>"><?php echo $page ?></a></li>
+  <?php endif; ?>
+<?php endforeach; ?>
+
+<!-- Next page link -->
+<?php if (isset($this->next)): ?>
+  <li data-page="<?=$this->next?>" class="arrow"><a href="<?php echo $this->url($this->route, $aUrlParams + array('page' => $this->next), $aUrlOptions); ?>">&raquo;</a></li>
+<?php else: ?>
+    <li class="disabled"><a>&raquo;</a></li>
+<?php endif; ?>
+
+</ul>
+<?php endif; ?>

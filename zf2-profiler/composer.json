@@ -1,0 +1,17 @@
+{
+    "name": "ubimet/zf2-profiler",
+    "type": "library",
+    "description": "Performance profiler module for Zend Framework 2",
+    "license": "proprietary",
+    "keywords": [ "zf2", "profiler", "performance" ],
+    "require": {
+        "php": ">=5.3.0",
+        "zendframework/zend-developer-tools": "dev-master",
+        "bjyoungblood/BjyProfiler": "dev-master"
+    },
+    "autoload": {
+        "classmap": [
+            "./Module.php"
+        ]
+    }
+}
